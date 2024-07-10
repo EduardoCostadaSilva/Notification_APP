@@ -11,16 +11,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "expo": {
-      "plugins": [
-        [
-          "expo-notifications",
-          {
-            "sounds": ["./assets/Uêpa!(1).wav"]
-          }
-        ]
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "sounds": "./assets/Uepa.mp3"
+        }
       ]
-    },
+    ],
     "ios": {
       "supportsTablet": true
     },
