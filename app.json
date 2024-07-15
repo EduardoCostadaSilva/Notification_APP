@@ -15,7 +15,7 @@
       [
         "expo-notifications",
         {
-          "sounds": "./assets/Uepa.mp3"
+          "sounds": "./assets/Uepa.wav"
         }
       ]
     ],

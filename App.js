@@ -1,64 +1,65 @@
 import { useEffect } from 'react';
-import { StyleSheet, Text, View, Button, Alert } from 'react-native';
+import { View, Button, StyleSheet, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { Audio } from 'expo-av';
+import * as Device from 'expo-device';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
-    shouldShowAlert: true,
-  })
+  }),
 });
-
-const loadCustomSound = async () => {
-  try {
-    const { sound } = await Audio.Sound.createAsync(
-      require('./assets/Uepa.mp3') // Caminho para o seu arquivo de som
-    );
-    return sound;
-  } catch (error) {
-    console.error('Erro ao carregar som personalizado:', error);
-    return null;
-  }
-};
 
 export default function App() {
   useEffect(() => {
-    // Carregar som personalizado ao inicializar o componente
-    loadCustomSound();
-  }, []);
+    async function requestPermissions() {
+      if (Device.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          alert('É necessário que as permissões sejam dadas!');
+          return;
+        }
+      } else {
+        alert('Use um dispositivo mobile para funcionar');
+      }
 
-  const handleCallNotifications = async () => {
-    const { status } = await Notifications.getPermissionsAsync();
-
-    if (status !== 'granted') {
-      const { status: newStatus } = await Notifications.requestPermissionsAsync();
-      if (newStatus !== 'granted') {
-        Alert.alert('Permissões de notificação não concedidas');
-        return;
+      if (Platform.OS === 'android') {
+        Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
       }
     }
+    requestPermissions();
+  }, []);
 
-    // Aqui você pode agendar uma notificação com o som personalizado
-    const sound = await loadCustomSound();
-
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: 'Título da Notificação',
-        body: 'Corpo da Notificação',
-        sound: sound, // Inclui o som personalizado aqui
-      },
-      trigger: {
-        seconds: 2,
-      },
-    });
+  const scheduleNotification = async () => {
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Você tem uma nova mensagem!",
+          body: "Esta é a sua notificação com som personalizado.",
+          sound: 'custom',
+        },
+        trigger: { seconds: 5 },
+      });
+      console.log('Notificação enviada com sucesso!!!');
+    } catch (error) {
+      console.error('Error scheduling notification:', error);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text>App de Notificações</Text>
-      <Button title="Chamar notificação" color="red" onPress={handleCallNotifications} />
+      <Button title="Enviar Notificação" onPress={scheduleNotification} />
     </View>
   );
 }
@@ -66,7 +67,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
